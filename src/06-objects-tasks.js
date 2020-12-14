@@ -20,8 +20,10 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  this.width = width;
+  this.height = height;
+  this.getArea = () => this.width * this.height;
 }
 
 
@@ -35,8 +37,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -51,8 +53,8 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  return Object.assign(Object.create(proto), JSON.parse(json));
 }
 
 
@@ -109,34 +111,134 @@ function fromJSON(/* proto, json */) {
  *
  *  For more examples see unit tests.
  */
+class CSSPath {
+  constructor() {
+    this.css = {};
+  }
+
+  element(value) {
+    if (this.css.element) {
+      throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    }
+    this.checkOrder('element');
+    this.css.element = value;
+    return this;
+  }
+
+  id(value) {
+    if (this.css.id) {
+      throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    }
+    this.checkOrder('id');
+    this.css.id = `#${value}`;
+    return this;
+  }
+
+  pseudoElement(value) {
+    if (this.css.pseudoElement) {
+      throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    }
+    this.checkOrder('pseudoElement');
+    this.css.pseudoElement = `::${value}`;
+    return this;
+  }
+
+  class(value) {
+    if (!this.css.class) {
+      this.css.class = '';
+    }
+    this.checkOrder('class');
+    this.css.class += `.${value}`;
+    return this;
+  }
+
+  attr(value) {
+    if (!this.css.attribute) {
+      this.css.attribute = '';
+    }
+    this.checkOrder('attribute');
+    this.css.attribute += `[${value}]`;
+    return this;
+  }
+
+  pseudoClass(value) {
+    if (!this.css.pseudoClass) {
+      this.css.pseudoClass = '';
+    }
+    this.checkOrder('pseudoClass');
+    this.css.pseudoClass += `:${value}`;
+    return this;
+  }
+
+  checkOrder(field) {
+    const order = ['element', 'id', 'class', 'attribute', 'pseudoClass', 'pseudoElement'];
+    const prev = order.slice(order.indexOf(field) + 1)
+      .some((f) => this.css[f]);
+    if (prev) {
+      throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    }
+  }
+
+  stringify() {
+    let result = '';
+    if (this.css.element) {
+      result += this.css.element;
+    }
+    if (this.css.id) {
+      result += this.css.id;
+    }
+    if (this.css.class) {
+      result += this.css.class;
+    }
+    if (this.css.attribute) {
+      result += this.css.attribute;
+    }
+    if (this.css.pseudoClass) {
+      result += this.css.pseudoClass;
+    }
+    if (this.css.pseudoElement) {
+      result += this.css.pseudoElement;
+    }
+    return result;
+  }
+}
+
+function CSSCombinedPath(firstSelector, combinator, secondSelector) {
+  this.firstSelector = firstSelector;
+  this.combinator = combinator;
+  this.secondSelector = secondSelector;
+
+  this.stringify = () => `${this.firstSelector.stringify()} ${this.combinator} ${this.secondSelector.stringify()}`;
+}
+
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new CSSPath().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new CSSPath().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new CSSPath().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new CSSPath().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new CSSPath().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new CSSPath().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return new CSSCombinedPath(selector1, combinator, selector2);
   },
 };
 
